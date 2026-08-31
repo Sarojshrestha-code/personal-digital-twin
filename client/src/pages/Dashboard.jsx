@@ -1,0 +1,204 @@
+import { Link } from "react-router-dom";
+
+function Dashboard() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6 md:p-10">
+      {/* Welcome Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+          Welcome back, {user?.name || "User"} 👋
+        </h1>
+
+        <p className="text-gray-500 mt-2">
+          Here's an overview of your Personal Digital Twin.
+        </p>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <p className="text-gray-500 text-sm">
+            Total Goals
+          </p>
+
+          <h2 className="text-3xl font-bold mt-2 text-blue-600">
+            0
+          </h2>
+
+          <p className="text-sm text-gray-400 mt-2">
+            Goals you are working on
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <p className="text-gray-500 text-sm">
+            Completed Tasks
+          </p>
+
+          <h2 className="text-3xl font-bold mt-2 text-green-600">
+            0
+          </h2>
+
+          <p className="text-sm text-gray-400 mt-2">
+            Tasks completed
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <p className="text-gray-500 text-sm">
+            Personal Memories
+          </p>
+
+          <h2 className="text-3xl font-bold mt-2 text-purple-600">
+            0
+          </h2>
+
+          <p className="text-sm text-gray-400 mt-2">
+            Stored notes and memories
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <p className="text-gray-500 text-sm">
+            AI Twin Status
+          </p>
+
+          <h2 className="text-lg font-bold mt-3 text-green-600">
+            ● Ready
+          </h2>
+
+          <p className="text-sm text-gray-400 mt-2">
+            Your assistant is available
+          </p>
+        </div>
+
+      </div>
+
+      {/* Main Dashboard Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+
+        {/* Quick Actions */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+
+          <h2 className="text-xl font-bold text-gray-800">
+            Quick Actions
+          </h2>
+
+          <p className="text-gray-500 text-sm mt-1">
+            Start interacting with your Digital Twin.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+
+            <Link
+              to="/memory"
+              className="border rounded-lg p-4 hover:bg-blue-50 hover:border-blue-400 transition"
+            >
+              <h3 className="font-semibold">
+                🧠 Add Memory
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Save notes, thoughts, or important information.
+              </p>
+            </Link>
+
+            <Link
+              to="/goals"
+              className="border rounded-lg p-4 hover:bg-green-50 hover:border-green-400 transition"
+            >
+              <h3 className="font-semibold">
+                🎯 Create Goal
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Set a new personal or professional goal.
+              </p>
+            </Link>
+
+            <Link
+              to="/tasks"
+              className="border rounded-lg p-4 hover:bg-purple-50 hover:border-purple-400 transition"
+            >
+              <h3 className="font-semibold">
+                ✅ Manage Tasks
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Organize and track your tasks.
+              </p>
+            </Link>
+
+            <Link
+              to="/ai-twin"
+              className="border rounded-lg p-4 hover:bg-orange-50 hover:border-orange-400 transition"
+            >
+              <h3 className="font-semibold">
+                🤖 Talk to AI Twin
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Ask for personalized assistance.
+              </p>
+            </Link>
+
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+
+          <h2 className="text-xl font-bold text-gray-800">
+            Recent Activity
+          </h2>
+
+          <p className="text-gray-500 text-sm mt-1">
+            Your latest interactions will appear here.
+          </p>
+
+          <div className="mt-6 text-center py-10">
+
+            <p className="text-gray-400 text-lg">
+              No activity yet.
+            </p>
+
+            <p className="text-gray-400 text-sm mt-2">
+              Start adding memories, goals, or tasks to see your activity.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* AI Insight Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl mt-8">
+
+        <h2 className="text-xl font-bold">
+          🤖 AI Twin Insight
+        </h2>
+
+        <p className="mt-2 text-blue-100">
+          Your Personal Digital Twin will analyze your memories,
+          activities, goals, and tasks to provide personalized
+          recommendations and decision support.
+        </p>
+
+        <Link
+          to="/ai-twin"
+          className="inline-block mt-4 bg-white text-blue-600 px-5 py-2 rounded-lg font-medium hover:bg-gray-100"
+        >
+          Start Conversation
+        </Link>
+
+      </div>
+
+    </div>
+  );
+}
+
+export default Dashboard;
