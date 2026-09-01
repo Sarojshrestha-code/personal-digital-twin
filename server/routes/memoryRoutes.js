@@ -2,6 +2,7 @@ const express = require("express");
 
 const Memory = require("../models/memory");
 const authMiddleware = require("../middleware/authMiddleware");
+const logActivity = require("../utils/activityLogger");
 
 const router = express.Router();
 
@@ -25,6 +26,13 @@ router.post("/", authMiddleware, async (req, res) => {
       content,
       category,
     });
+
+    await logActivity({
+  userId: req.userId,
+  type: "memory_created",
+  description: `Created memory: ${memory.content}`,
+  relatedId: memory._id,
+});
 
     res.status(201).json({
       message: "Memory saved successfully",
@@ -76,11 +84,19 @@ router.delete("/:id", authMiddleware, async (req, res) => {
       user: req.userId,
     });
 
+    
     if (!memory) {
       return res.status(404).json({
         message: "Memory not found",
       });
     }
+
+    await logActivity({
+  userId: req.userId,
+  type: "memory_deleted",
+  description: `Deleted memory: ${memory.content}`,
+  relatedId: memory._id,
+});
 
     res.json({
       message: "Memory deleted successfully",
