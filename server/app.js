@@ -6,6 +6,7 @@ const memoryRoutes = require("./routes/memoryRoutes");
 const goalRoutes = require("./routes/goalRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const activityRoutes = require("./routes/activityRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use("/api/memories", memoryRoutes);
 app.use("/api/goals", goalRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/activity", activityRoutes);
+app.use("/api/ai", aiRoutes);
 
 module.exports = app;

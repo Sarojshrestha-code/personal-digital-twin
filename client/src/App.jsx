@@ -13,6 +13,7 @@ import Memory from "./pages/memory";
 import Goals from "./pages/goal";
 import Tasks from "./pages/tasks";
 import Activity from "./pages/Activity";
+import AITwin from "./pages/AITwin";
 
 
 function App() {
@@ -53,6 +54,7 @@ function App() {
     </ProtectedRoute>
   }
 />
+<Route path="/ai-twin" element={<AITwin />} />
 
 <Route
   path="/tasks"
@@ -63,6 +65,8 @@ function App() {
   }
 
 />
+
+<Route path="/aitwin" element={<AITwin />} />
 
         <Route
           path="/profile"
