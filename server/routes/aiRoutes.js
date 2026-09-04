@@ -1,7 +1,13 @@
-const express = require("express");
+ const express = require("express");
+const Groq = require("groq-sdk");
+
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 // AI TWIN CHAT
 router.post("/chat", authMiddleware, async (req, res) => {
@@ -14,19 +20,36 @@ router.post("/chat", authMiddleware, async (req, res) => {
       });
     }
 
-    // Temporary response
-    // Real AI will be connected in the next step
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-20b",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful Personal Digital Twin assistant. Give clear, friendly and useful responses to the user.",
+        },
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+    });
+
+    const reply =
+      completion.choices[0]?.message?.content ||
+      "Sorry, I could not generate a response.";
+
     res.json({
-      message: "AI Twin route is working!",
+      message: "AI response generated successfully",
       userMessage: message,
-      reply: `I received your message: "${message}"`,
+      reply,
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("AI Error:", error);
 
     res.status(500).json({
-      message: "Failed to process AI request",
+      message: "Failed to generate AI response",
     });
   }
 });
