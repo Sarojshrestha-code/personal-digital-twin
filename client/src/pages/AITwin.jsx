@@ -155,20 +155,22 @@ function AITwin() {
     ),
 
     ul: ({ children }) => (
-      <ul className="list-disc ml-5 mb-2 space-y-1">
-        {children}
-      </ul>
-    ),
+  <ul className="list-disc pl-6 mb-2 space-y-1">
+    {children}
+  </ul>
+),
 
-    ol: ({ children }) => (
-      <ol className="list-decimal ml-5 mb-2 space-y-1">
-        {children}
-      </ol>
-    ),
+ol: ({ children }) => (
+  <ol className="list-decimal pl-6 mb-2 space-y-1">
+    {children}
+  </ol>
+),
 
-    li: ({ children }) => (
-      <li>{children}</li>
-    ),
+li: ({ children }) => (
+  <li className="pl-1">
+    {children}
+  </li>
+),
 
     strong: ({ children }) => (
       <strong className="font-bold">
