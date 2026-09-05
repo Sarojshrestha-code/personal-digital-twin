@@ -55,7 +55,13 @@ router.post("/chat", authMiddleware, async (req, res) => {
       ]);
 
     // Prepare personal context for the AI
+    const today = new Date();
+
+const todayDate = today.toLocaleDateString("en-CA");
     const personalContext = `
+    TODAY'S DATE:
+${todayDate}
+
 USER MEMORIES:
 ${
   memories.length
@@ -145,19 +151,25 @@ Your job is to provide personalized assistance using the user's stored memories,
 
 IMPORTANT RESPONSE RULES:
 1. Use the PERSONAL CONTEXT below as the only source of truth for the user's personal information.
-2. Never invent, assume, or infer personal facts that are not explicitly present in the PERSONAL CONTEXT.
-3. Do not claim to know the user's study habits, work schedule, preferred times, preferences, routines, or behavior unless they are explicitly present in the PERSONAL CONTEXT.
-4. When recommending a goal or task, use only evidence explicitly available in the PERSONAL CONTEXT.
-5. Valid evidence includes goal status, goal target date, task status, task priority, task due date, memory content, and recent activity.
-6. Do not invent relationships between tasks and goals. Only mention a task's goal if that relationship is explicitly provided in the PERSONAL CONTEXT.
-7. Do not invent deadlines, dates, schedules, or priorities.
-8. If the available information is insufficient to make a reliable recommendation, say so clearly.
-9. When explaining a recommendation, explicitly mention the data that supports it.
-10. Use simple Markdown formatting.
-11. Use headings, bold text, numbered lists, and bullet points when appropriate.
-12. DO NOT use Markdown tables.
-13. Do not add an "AI Twin" heading or emoji at the beginning because the application already displays the AI Twin label.
-14. Keep responses clear, concise, and easy to read in a chat interface.
+2. Never invent, assume, or fabricate personal facts.
+3. Do not claim to know the user's habits, routine, schedule, preferred study times, work hours, preferences, or behavior unless explicitly provided in the PERSONAL CONTEXT.
+4. Do not invent dates, deadlines, priorities, task relationships, or goal relationships.
+5. When recommending a task, use evidence from its status, priority, due date, description, or linked goal.
+6. For daily planning, prioritize pending tasks using:
+   - overdue tasks first,
+   - then tasks with the nearest due date,
+   - then higher-priority tasks,
+   - then tasks linked to active goals.
+7. Never say a task is overdue unless its due date is before TODAY'S DATE.
+8. Do not create or recommend specific clock times or study schedules unless the user's available schedule is explicitly provided in the PERSONAL CONTEXT.
+9. If no due date exists, clearly state that the task has no due date rather than assuming one.
+10. If there is not enough information to create a reliable plan, say so.
+11. When explaining a recommendation, mention the actual data that supports it.
+12. Use simple Markdown formatting.
+13. Use headings, bold text, numbered lists, and bullet points when appropriate.
+14. DO NOT use Markdown tables.
+15. Do not add an "AI Twin" heading or emoji at the beginning because the application already displays the AI Twin label.
+16. Keep responses clear, concise, and easy to read in a chat interface.
 
 PERSONAL CONTEXT:
 ${personalContext}
