@@ -7,6 +7,7 @@ const goalRoutes = require("./routes/goalRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const behaviorRoutes = require("./routes/behaviorRoutes");
 
 const app = express();
 
@@ -27,5 +28,5 @@ app.use("/api/goals", goalRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/ai", aiRoutes);
-
+app.use("/api/behaviors", behaviorRoutes);
 module.exports = app;
