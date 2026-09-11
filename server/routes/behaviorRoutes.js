@@ -1,5 +1,8 @@
+require("dotenv").config();
 const express = require("express");
 const Groq = require("groq-sdk");
+
+
 
 const Task = require("../models/tasks");
 const Goal = require("../models/goal");
