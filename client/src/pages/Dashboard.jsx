@@ -1,4 +1,5 @@
- import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
 import API from "../api/api";
 
@@ -19,10 +20,38 @@ const [loadingInsight, setLoadingInsight] = useState(true);
   const [loadingActivity, setLoadingActivity] = useState(true);
 
   // Fetch dashboard data
-  useEffect(() => {
-    fetchRecentActivity();
-    fetchDashboardStats();
-  }, []);
+ useEffect(() => {
+  fetchRecentActivity();
+  fetchDashboardStats();
+// =========================
+// FETCH AI BEHAVIORAL INSIGHT
+// =========================
+const fetchBehaviorInsight = async () => {
+  try {
+    setLoadingInsight(true);
+
+    const response = await API.post("/behaviors/insights");
+
+    setBehaviorInsight(
+      response.data.insight ||
+        "No behavioral insight available yet."
+    );
+  } catch (error) {
+    console.error(
+      "Failed to fetch AI behavioral insight:",
+      error
+    );
+
+    setBehaviorInsight(
+      "Unable to generate behavioral insight right now."
+    );
+  } finally {
+    setLoadingInsight(false);
+  }
+};
+
+  fetchBehaviorInsight();
+}, []);
 
   // =========================
   // FETCH RECENT ACTIVITY
@@ -405,29 +434,90 @@ const [loadingInsight, setLoadingInsight] = useState(true);
 
 
       {/* =========================
-          AI TWIN INSIGHT
-      ========================= */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl mt-8">
+    AI BEHAVIORAL INSIGHTS
+========================= */}
+<div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl mt-8">
 
-        <h2 className="text-xl font-bold">
-          🤖 AI Twin Insight
+  <div className="flex items-center justify-between">
+
+    <div>
+      <h2 className="text-xl font-bold">
+        🧠 AI Behavioral Insights
+      </h2>
+
+      <p className="text-blue-100 text-sm mt-1">
+        Insights generated from your tasks, goals, and activity.
+      </p>
+    </div>
+
+    <Link
+      to="/ai-twin"
+      className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100"
+    >
+      Talk to AI Twin
+    </Link>
+
+  </div>
+
+  <div className="mt-6 bg-white/10 rounded-lg p-5">
+
+    {loadingInsight ? (
+      <p className="text-blue-100">
+        Analyzing your behavior...
+      </p>
+    ) : (
+      <div className="text-blue-50 leading-relaxed">
+  <ReactMarkdown
+    components={{
+      h2: ({ children }) => (
+        <h2 className="text-lg font-bold text-white mt-5 mb-3">
+          {children}
         </h2>
+      ),
 
-        <p className="mt-2 text-blue-100">
-          Your Personal Digital Twin will analyze your
-          memories, activities, goals, and tasks to provide
-          personalized recommendations and decision support.
+      h3: ({ children }) => (
+        <h3 className="text-base font-semibold text-white mt-4 mb-2">
+          {children}
+        </h3>
+      ),
+
+      p: ({ children }) => (
+        <p className="mb-3 text-blue-50">
+          {children}
         </p>
+      ),
 
-        <Link
-          to="/ai-twin"
-          className="inline-block mt-4 bg-white text-blue-600 px-5 py-2 rounded-lg font-medium hover:bg-gray-100"
-        >
-          Start Conversation
-        </Link>
+      ul: ({ children }) => (
+        <ul className="list-disc ml-5 space-y-2 mb-4">
+          {children}
+        </ul>
+      ),
 
-      </div>
+      li: ({ children }) => (
+        <li className="text-blue-50">
+          {children}
+        </li>
+      ),
 
+      strong: ({ children }) => (
+        <strong className="font-semibold text-white">
+          {children}
+        </strong>
+      ),
+
+      hr: () => (
+        <hr className="border-white/20 my-5" />
+      ),
+    }}
+  >
+    {behaviorInsight}
+  </ReactMarkdown>
+</div>
+    )}
+
+  </div>
+
+</div>
     </div>
   );
 }
