@@ -10,6 +10,10 @@ function Dashboard() {
   const [completedTasks, setCompletedTasks] = useState(0);
   const [totalMemories, setTotalMemories] = useState(0);
 
+  // AI Behavioral Insights
+const [behaviorInsight, setBehaviorInsight] = useState("");
+const [loadingInsight, setLoadingInsight] = useState(true);
+
   // Recent activity
   const [activities, setActivities] = useState([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
