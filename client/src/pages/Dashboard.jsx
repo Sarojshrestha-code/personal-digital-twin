@@ -10,6 +10,10 @@ function Dashboard() {
   const [totalGoals, setTotalGoals] = useState(0);
   const [completedTasks, setCompletedTasks] = useState(0);
   const [totalMemories, setTotalMemories] = useState(0);
+  
+  // AI Behavioral Summary
+const [behaviorSummary, setBehaviorSummary] = useState(null);
+const [loadingBehavior, setLoadingBehavior] = useState(true);
 
   // AI Behavioral Insights
 const [behaviorInsight, setBehaviorInsight] = useState("");
@@ -23,6 +27,10 @@ const [loadingInsight, setLoadingInsight] = useState(true);
  useEffect(() => {
   fetchRecentActivity();
   fetchDashboardStats();
+  fetchBehaviorInsight();
+  fetchBehaviorSummary();
+}, []);
+
 // =========================
 // FETCH AI BEHAVIORAL INSIGHT
 // =========================
@@ -36,6 +44,7 @@ const fetchBehaviorInsight = async () => {
       response.data.insight ||
         "No behavioral insight available yet."
     );
+
   } catch (error) {
     console.error(
       "Failed to fetch AI behavioral insight:",
@@ -45,13 +54,32 @@ const fetchBehaviorInsight = async () => {
     setBehaviorInsight(
       "Unable to generate behavioral insight right now."
     );
+
   } finally {
     setLoadingInsight(false);
   }
 };
 
-  fetchBehaviorInsight();
-}, []);
+const fetchBehaviorSummary = async () => {
+  try {
+    setLoadingBehavior(true);
+
+    const response = await API.get("/behaviors/summary");
+
+    setBehaviorSummary(
+      response.data.analysis || null
+    );
+
+  } catch (error) {
+    console.error(
+      "Failed to fetch behavioral summary:",
+      error
+    );
+
+  } finally {
+    setLoadingBehavior(false);
+  }
+};
 
   // =========================
   // FETCH RECENT ACTIVITY
@@ -434,85 +462,306 @@ const fetchBehaviorInsight = async () => {
 
 
       {/* =========================
+    {/* =========================
     AI BEHAVIORAL INSIGHTS
 ========================= */}
-<div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl mt-8">
+<div className="bg-white rounded-2xl shadow-sm border border-gray-200 mt-8 overflow-hidden">
 
-  <div className="flex items-center justify-between">
+  {/* Header */}
+  <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
     <div>
-      <h2 className="text-xl font-bold">
-        🧠 AI Behavioral Insights
-      </h2>
+      <div className="flex items-center gap-2">
+        <span className="text-2xl">🧠</span>
 
-      <p className="text-blue-100 text-sm mt-1">
-        Insights generated from your tasks, goals, and activity.
+        <h2 className="text-xl font-bold text-gray-900">
+          AI Behavioral Insights
+        </h2>
+      </div>
+
+      <p className="text-gray-500 text-sm mt-1">
+        Your Personal Digital Twin analyzes your recent behavior and progress.
       </p>
     </div>
 
     <Link
       to="/ai-twin"
-      className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100"
+      className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
     >
       Talk to AI Twin
     </Link>
 
   </div>
 
-  <div className="mt-6 bg-white/10 rounded-lg p-5">
 
-    {loadingInsight ? (
-      <p className="text-blue-100">
+  {/* Behavioral Metrics */}
+  <div className="p-6">
+
+    {loadingBehavior ? (
+
+      <div className="text-center py-8 text-gray-500">
         Analyzing your behavior...
-      </p>
+      </div>
+
+    ) : behaviorSummary ? (
+
+      <>
+        {/* Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {/* Task Completion */}
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+
+            <p className="text-sm text-gray-500">
+              Task Completion
+            </p>
+
+            <div className="flex items-end gap-2 mt-2">
+
+              <span className="text-3xl font-bold text-blue-600">
+                {behaviorSummary.tasks.completionRate}%
+              </span>
+
+              <span className="text-sm text-gray-500 mb-1">
+                {behaviorSummary.tasks.performance}
+              </span>
+
+            </div>
+
+            <p className="text-xs text-gray-500 mt-2">
+              {behaviorSummary.tasks.completed} of{" "}
+              {behaviorSummary.tasks.total} tasks completed
+            </p>
+
+          </div>
+
+
+          {/* Goal Progress */}
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
+
+            <p className="text-sm text-gray-500">
+              Goal Progress
+            </p>
+
+            <div className="flex items-end gap-2 mt-2">
+
+              <span className="text-3xl font-bold text-indigo-600">
+                {behaviorSummary.goals.completionRate}%
+              </span>
+
+              <span className="text-sm text-gray-500 mb-1">
+                {behaviorSummary.goals.progress}
+              </span>
+
+            </div>
+
+            <p className="text-xs text-gray-500 mt-2">
+              {behaviorSummary.goals.completed} of{" "}
+              {behaviorSummary.goals.total} goals completed
+            </p>
+
+          </div>
+
+
+          {/* Activity */}
+          <div className="bg-purple-50 border border-purple-100 rounded-xl p-5">
+
+            <p className="text-sm text-gray-500">
+              Recent Activity
+            </p>
+
+            <div className="flex items-end gap-2 mt-2">
+
+              <span className="text-3xl font-bold text-purple-600">
+                {behaviorSummary.activity.recentActivities}
+              </span>
+
+              <span className="text-sm text-gray-500 mb-1">
+                actions
+              </span>
+
+            </div>
+
+            <p className="text-xs text-gray-500 mt-2">
+              {behaviorSummary.activity.tasksCompleted} tasks completed
+            </p>
+
+          </div>
+
+        </div>
+
+
+        {/* Status Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+
+          {/* Strengths */}
+          <div className="bg-green-50 border border-green-100 rounded-xl p-5">
+
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span>✓</span>
+              Current Strengths
+            </h3>
+
+            <ul className="mt-3 space-y-2 text-sm text-gray-600">
+
+              {behaviorSummary.tasks.completionRate >= 60 && (
+                <li>
+                  • Strong task completion performance
+                </li>
+              )}
+
+              {behaviorSummary.goals.completionRate >= 60 && (
+                <li>
+                  • Good progress toward your goals
+                </li>
+              )}
+
+              {behaviorSummary.activity.recentActivities > 0 && (
+                <li>
+                  • Consistent recent activity
+                </li>
+              )}
+
+              {behaviorSummary.tasks.completionRate < 60 &&
+                behaviorSummary.goals.completionRate < 60 && (
+                  <li>
+                    • Building a consistent productivity pattern
+                  </li>
+              )}
+
+            </ul>
+
+          </div>
+
+
+          {/* Areas to Improve */}
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-5">
+
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <span>⚠</span>
+              Areas to Improve
+            </h3>
+
+            <ul className="mt-3 space-y-2 text-sm text-gray-600">
+
+              {behaviorSummary.tasks.highPriorityPending > 0 && (
+                <li>
+                  • {behaviorSummary.tasks.highPriorityPending} high-priority task(s) pending
+                </li>
+              )}
+
+              {behaviorSummary.deadlines.overdueTasks > 0 && (
+                <li>
+                  • {behaviorSummary.deadlines.overdueTasks} overdue task(s) need attention
+                </li>
+              )}
+
+              {behaviorSummary.goals.completionRate < 60 && (
+                <li>
+                  • Goal completion needs improvement
+                </li>
+              )}
+
+              {behaviorSummary.tasks.highPriorityPending === 0 &&
+                behaviorSummary.deadlines.overdueTasks === 0 &&
+                behaviorSummary.goals.completionRate >= 60 && (
+                  <li>
+                    • No major issues detected from current data
+                  </li>
+              )}
+
+            </ul>
+
+          </div>
+
+        </div>
+
+
+        {/* AI Insight */}
+        <div className="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-5">
+
+          <div className="flex items-center gap-2 mb-3">
+
+            <span className="text-lg">🤖</span>
+
+            <h3 className="font-semibold text-gray-900">
+              AI Analysis
+            </h3>
+
+          </div>
+
+          {loadingInsight ? (
+
+            <p className="text-gray-500 text-sm">
+              Generating personalized analysis...
+            </p>
+
+          ) : (
+
+            <div className="text-gray-700 text-sm leading-relaxed">
+
+              <ReactMarkdown
+                components={{
+
+                  h2: ({ children }) => (
+                    <h2 className="text-base font-bold text-gray-900 mt-4 mb-2">
+                      {children}
+                    </h2>
+                  ),
+
+                  h3: ({ children }) => (
+                    <h3 className="text-sm font-semibold text-gray-900 mt-3 mb-2">
+                      {children}
+                    </h3>
+                  ),
+
+                  p: ({ children }) => (
+                    <p className="mb-2">
+                      {children}
+                    </p>
+                  ),
+
+                  ul: ({ children }) => (
+                    <ul className="list-disc ml-5 space-y-1 mb-3">
+                      {children}
+                    </ul>
+                  ),
+
+                  li: ({ children }) => (
+                    <li>
+                      {children}
+                    </li>
+                  ),
+
+                  strong: ({ children }) => (
+                    <strong className="font-semibold text-gray-900">
+                      {children}
+                    </strong>
+                  ),
+
+                  hr: () => (
+                    <hr className="border-gray-200 my-4" />
+                  ),
+
+                }}
+              >
+                {behaviorInsight}
+              </ReactMarkdown>
+
+            </div>
+
+          )}
+
+        </div>
+
+      </>
+
     ) : (
-      <div className="text-blue-50 leading-relaxed">
-  <ReactMarkdown
-    components={{
-      h2: ({ children }) => (
-        <h2 className="text-lg font-bold text-white mt-5 mb-3">
-          {children}
-        </h2>
-      ),
 
-      h3: ({ children }) => (
-        <h3 className="text-base font-semibold text-white mt-4 mb-2">
-          {children}
-        </h3>
-      ),
+      <div className="text-center py-8 text-gray-500">
+        Behavioral data is not available yet.
+      </div>
 
-      p: ({ children }) => (
-        <p className="mb-3 text-blue-50">
-          {children}
-        </p>
-      ),
-
-      ul: ({ children }) => (
-        <ul className="list-disc ml-5 space-y-2 mb-4">
-          {children}
-        </ul>
-      ),
-
-      li: ({ children }) => (
-        <li className="text-blue-50">
-          {children}
-        </li>
-      ),
-
-      strong: ({ children }) => (
-        <strong className="font-semibold text-white">
-          {children}
-        </strong>
-      ),
-
-      hr: () => (
-        <hr className="border-white/20 my-5" />
-      ),
-    }}
-  >
-    {behaviorInsight}
-  </ReactMarkdown>
-</div>
     )}
 
   </div>
