@@ -1,4 +1,4 @@
-const express = require("express");
+ const express = require("express");
 
 const ActivityLog = require("../models/ActivityLog");
 const authMiddleware = require("../middleware/authMiddleware");
@@ -6,7 +6,10 @@ const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
 
 
+// =====================================================
 // GET USER ACTIVITY LOGS
+// =====================================================
+
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const activities = await ActivityLog.find({
@@ -20,8 +23,9 @@ router.get("/", authMiddleware, async (req, res) => {
     res.json({
       activities,
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Fetch activities error:", error);
 
     res.status(500).json({
       message: "Failed to fetch activities",
@@ -30,7 +34,10 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 
+// =====================================================
 // CREATE ACTIVITY LOG
+// =====================================================
+
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const {
@@ -40,6 +47,9 @@ router.post("/", authMiddleware, async (req, res) => {
       metadata,
     } = req.body;
 
+
+    // Check required fields
+
     if (!type || !description) {
       return res.status(400).json({
         message:
@@ -47,20 +57,32 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
+
+    // Create activity
+
     const activity = await ActivityLog.create({
       user: req.userId,
+
       type,
+
       description,
+
       relatedId: relatedId || null,
+
       metadata: metadata || {},
     });
 
+
+    // Send response
+
     res.status(201).json({
       message: "Activity logged successfully",
+
       activity,
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Create activity error:", error);
 
     res.status(500).json({
       message: "Failed to create activity",

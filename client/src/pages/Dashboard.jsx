@@ -1,164 +1,191 @@
+ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import axios from "axios";
 import ReactMarkdown from "react-markdown";
-import { Link } from "react-router-dom";
-import API from "../api/api";
+import remarkGfm from "remark-gfm";
 
 function Dashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token");
 
-  // Dashboard statistics
+  // =====================================================
+  // STATE
+  // =====================================================
+
+  const [behaviorInsight, setBehaviorInsight] = useState("");
+  const [loadingInsight, setLoadingInsight] = useState(true);
+
   const [totalGoals, setTotalGoals] = useState(0);
   const [completedTasks, setCompletedTasks] = useState(0);
   const [totalMemories, setTotalMemories] = useState(0);
-  
-  // AI Behavioral Summary
-const [behaviorSummary, setBehaviorSummary] = useState(null);
-const [loadingBehavior, setLoadingBehavior] = useState(true);
 
-  // AI Behavioral Insights
-const [behaviorInsight, setBehaviorInsight] = useState("");
-const [loadingInsight, setLoadingInsight] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
 
-  // Recent activity
-  const [activities, setActivities] = useState([]);
-  const [loadingActivity, setLoadingActivity] = useState(true);
 
-  // Fetch dashboard data
- useEffect(() => {
-  fetchRecentActivity();
-  fetchDashboardStats();
-  fetchBehaviorInsight();
-  fetchBehaviorSummary();
-}, []);
+  // =====================================================
+  // FETCH AI BEHAVIORAL INSIGHT
+  // =====================================================
 
-// =========================
-// FETCH AI BEHAVIORAL INSIGHT
-// =========================
-const fetchBehaviorInsight = async () => {
-  try {
-    setLoadingInsight(true);
+  useEffect(() => {
+    const fetchBehaviorInsight = async () => {
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/behaviors/insights",
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-    const response = await API.post("/behaviors/insights");
+        setBehaviorInsight(response.data.insight);
+      } catch (error) {
+        console.error(
+          "Failed to fetch behavioral insight:",
+          error
+        );
 
-    setBehaviorInsight(
-      response.data.insight ||
-        "No behavioral insight available yet."
-    );
+        setBehaviorInsight(
+          "Unable to generate behavioral insights right now."
+        );
+      } finally {
+        setLoadingInsight(false);
+      }
+    };
 
-  } catch (error) {
-    console.error(
-      "Failed to fetch AI behavioral insight:",
-      error
-    );
+    if (token) {
+      fetchBehaviorInsight();
+    } else {
+      setLoadingInsight(false);
 
-    setBehaviorInsight(
-      "Unable to generate behavioral insight right now."
-    );
-
-  } finally {
-    setLoadingInsight(false);
-  }
-};
-
-const fetchBehaviorSummary = async () => {
-  try {
-    setLoadingBehavior(true);
-
-    const response = await API.get("/behaviors/summary");
-
-    setBehaviorSummary(
-      response.data.analysis || null
-    );
-
-  } catch (error) {
-    console.error(
-      "Failed to fetch behavioral summary:",
-      error
-    );
-
-  } finally {
-    setLoadingBehavior(false);
-  }
-};
-
-  // =========================
-  // FETCH RECENT ACTIVITY
-  // =========================
-  const fetchRecentActivity = async () => {
-    try {
-      const response = await API.get("/activity");
-
-      // Show only latest 5 activities
-      setActivities(
-        (response.data.activities || []).slice(0, 5)
+      setBehaviorInsight(
+        "Please log in to view your behavioral insights."
       );
-    } catch (error) {
-      console.error(
-        "Failed to fetch recent activity:",
-        error
-      );
-    } finally {
-      setLoadingActivity(false);
     }
-  };
+  }, [token]);
 
-  // =========================
+
+  // =====================================================
   // FETCH DASHBOARD STATISTICS
-  // =========================
-  const fetchDashboardStats = async () => {
-    try {
-      const [
-        goalsResponse,
-        tasksResponse,
-        memoriesResponse,
-      ] = await Promise.all([
-        API.get("/goals"),
-        API.get("/tasks"),
-        API.get("/memories"),
-      ]);
+  // =====================================================
 
-      const goals = goalsResponse.data.goals || [];
-      const tasks = tasksResponse.data.tasks || [];
-      const memories =
-        memoriesResponse.data.memories || [];
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
 
-      // Total goals
-      setTotalGoals(goals.length);
+        const [
+          goalsResponse,
+          tasksResponse,
+          memoriesResponse,
+        ] = await Promise.all([
+          axios.get(
+            "http://localhost:5000/api/goals",
+            {
+              headers,
+            }
+          ),
 
-      // Completed tasks
-      setCompletedTasks(
-        tasks.filter(
-          (task) => task.status === "completed"
-        ).length
-      );
+          axios.get(
+            "http://localhost:5000/api/tasks",
+            {
+              headers,
+            }
+          ),
 
-      // Total memories
-      setTotalMemories(memories.length);
+          axios.get(
+            "http://localhost:5000/api/memories",
+            {
+              headers,
+            }
+          ),
+        ]);
 
-    } catch (error) {
-      console.error(
-        "Failed to fetch dashboard statistics:",
-        error
-      );
+
+        // =================================================
+        // HANDLE DIFFERENT API RESPONSE STRUCTURES
+        // =================================================
+
+        const goals =
+          goalsResponse.data.goals ||
+          goalsResponse.data.data ||
+          goalsResponse.data ||
+          [];
+
+        const tasks =
+          tasksResponse.data.tasks ||
+          tasksResponse.data.data ||
+          tasksResponse.data ||
+          [];
+
+        const memories =
+          memoriesResponse.data.memories ||
+          memoriesResponse.data.data ||
+          memoriesResponse.data ||
+          [];
+
+
+        // =================================================
+        // UPDATE STATISTICS
+        // =================================================
+
+        setTotalGoals(
+          Array.isArray(goals)
+            ? goals.length
+            : 0
+        );
+
+
+        setCompletedTasks(
+          Array.isArray(tasks)
+            ? tasks.filter(
+                (task) =>
+                  task.status === "completed"
+              ).length
+            : 0
+        );
+
+
+        setTotalMemories(
+          Array.isArray(memories)
+            ? memories.length
+            : 0
+        );
+
+      } catch (error) {
+        console.error(
+          "Failed to fetch dashboard statistics:",
+          error
+        );
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+
+    if (token) {
+      fetchDashboardStats();
+    } else {
+      setLoadingStats(false);
     }
-  };
 
-  // =========================
-  // FORMAT ACTIVITY TYPE
-  // =========================
-  const formatActivityType = (type) => {
-    return type.replaceAll("_", " ");
-  };
+  }, [token]);
 
-  // =========================
+
+  // =====================================================
   // DASHBOARD UI
-  // =========================
+  // =====================================================
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-10">
 
-      {/* =========================
-          WELCOME SECTION
-      ========================= */}
+      {/* =====================================================
+          WELCOME
+      ===================================================== */}
+
       <div className="mb-8">
 
         <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
@@ -172,12 +199,15 @@ const fetchBehaviorSummary = async () => {
       </div>
 
 
-      {/* =========================
-          STATISTICS CARDS
-      ========================= */}
+      {/* =====================================================
+          STATISTICS
+      ===================================================== */}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
+
         {/* TOTAL GOALS */}
+
         <div className="bg-white p-6 rounded-xl shadow-sm border">
 
           <p className="text-gray-500 text-sm">
@@ -185,7 +215,7 @@ const fetchBehaviorSummary = async () => {
           </p>
 
           <h2 className="text-3xl font-bold mt-2 text-blue-600">
-            {totalGoals}
+            {loadingStats ? "..." : totalGoals}
           </h2>
 
           <p className="text-sm text-gray-400 mt-2">
@@ -196,6 +226,7 @@ const fetchBehaviorSummary = async () => {
 
 
         {/* COMPLETED TASKS */}
+
         <div className="bg-white p-6 rounded-xl shadow-sm border">
 
           <p className="text-gray-500 text-sm">
@@ -203,7 +234,7 @@ const fetchBehaviorSummary = async () => {
           </p>
 
           <h2 className="text-3xl font-bold mt-2 text-green-600">
-            {completedTasks}
+            {loadingStats ? "..." : completedTasks}
           </h2>
 
           <p className="text-sm text-gray-400 mt-2">
@@ -214,6 +245,7 @@ const fetchBehaviorSummary = async () => {
 
 
         {/* PERSONAL MEMORIES */}
+
         <div className="bg-white p-6 rounded-xl shadow-sm border">
 
           <p className="text-gray-500 text-sm">
@@ -221,7 +253,7 @@ const fetchBehaviorSummary = async () => {
           </p>
 
           <h2 className="text-3xl font-bold mt-2 text-purple-600">
-            {totalMemories}
+            {loadingStats ? "..." : totalMemories}
           </h2>
 
           <p className="text-sm text-gray-400 mt-2">
@@ -232,6 +264,7 @@ const fetchBehaviorSummary = async () => {
 
 
         {/* AI TWIN STATUS */}
+
         <div className="bg-white p-6 rounded-xl shadow-sm border">
 
           <p className="text-gray-500 text-sm">
@@ -251,15 +284,17 @@ const fetchBehaviorSummary = async () => {
       </div>
 
 
-      {/* =========================
-          MAIN DASHBOARD CONTENT
-      ========================= */}
+      {/* =====================================================
+          QUICK ACTIONS + RECENT ACTIVITY
+      ===================================================== */}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
 
 
-        {/* =========================
+        {/* ===================================================
             QUICK ACTIONS
-        ========================= */}
+        =================================================== */}
+
         <div className="bg-white p-6 rounded-xl shadow-sm border">
 
           <h2 className="text-xl font-bold text-gray-800">
@@ -275,6 +310,7 @@ const fetchBehaviorSummary = async () => {
 
 
             {/* MEMORY */}
+
             <Link
               to="/memory"
               className="border rounded-lg p-4 hover:bg-blue-50 hover:border-blue-400 transition"
@@ -291,7 +327,8 @@ const fetchBehaviorSummary = async () => {
             </Link>
 
 
-            {/* GOALS */}
+            {/* GOAL */}
+
             <Link
               to="/goals"
               className="border rounded-lg p-4 hover:bg-green-50 hover:border-green-400 transition"
@@ -308,7 +345,8 @@ const fetchBehaviorSummary = async () => {
             </Link>
 
 
-            {/* TASKS */}
+            {/* TASK */}
+
             <Link
               to="/tasks"
               className="border rounded-lg p-4 hover:bg-purple-50 hover:border-purple-400 transition"
@@ -326,6 +364,7 @@ const fetchBehaviorSummary = async () => {
 
 
             {/* AI TWIN */}
+
             <Link
               to="/ai-twin"
               className="border rounded-lg p-4 hover:bg-orange-50 hover:border-orange-400 transition"
@@ -346,401 +385,176 @@ const fetchBehaviorSummary = async () => {
         </div>
 
 
-        {/* =========================
+        {/* ===================================================
             RECENT ACTIVITY
-        ========================= */}
+        =================================================== */}
+
         <div className="bg-white p-6 rounded-xl shadow-sm border">
 
+          <h2 className="text-xl font-bold text-gray-800">
+            Recent Activity
+          </h2>
 
-          {/* HEADER */}
+          <p className="text-gray-500 text-sm mt-1">
+            Your latest interactions will appear here.
+          </p>
+
+
+          <div className="mt-6 text-center py-10">
+
+            <p className="text-gray-400 text-lg">
+              No activity yet.
+            </p>
+
+            <p className="text-gray-400 text-sm mt-2">
+              Start adding memories, goals, or tasks to see
+              your activity.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          AI BEHAVIORAL INSIGHTS
+      ===================================================== */}
+
+      <div className="bg-white border rounded-xl shadow-sm mt-8 overflow-hidden">
+
+
+        {/* HEADER */}
+
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+
           <div className="flex items-center justify-between">
 
             <div>
 
-              <h2 className="text-xl font-bold text-gray-800">
-                Recent Activity
+              <h2 className="text-xl font-bold">
+                🧠 AI Behavioral Insights
               </h2>
 
-              <p className="text-gray-500 text-sm mt-1">
-                Your latest interactions will appear here.
+              <p className="text-blue-100 text-sm mt-1">
+                Personalized insights based on your tasks,
+                goals, and recent activity.
               </p>
 
             </div>
 
-
-            <Link
-              to="/activity"
-              className="text-blue-600 text-sm hover:underline"
-            >
-              View All
-            </Link>
-
-          </div>
-
-
-          {/* ACTIVITY CONTENT */}
-          <div className="mt-6">
-
-
-            {/* LOADING */}
-            {loadingActivity && (
-              <p className="text-gray-400 text-center py-10">
-                Loading activity...
-              </p>
-            )}
-
-
-            {/* NO ACTIVITY */}
-            {!loadingActivity &&
-              activities.length === 0 && (
-                <div className="text-center py-10">
-
-                  <p className="text-gray-400 text-lg">
-                    No activity yet.
-                  </p>
-
-                  <p className="text-gray-400 text-sm mt-2">
-                    Start adding memories, goals, or tasks
-                    to see your activity.
-                  </p>
-
-                </div>
-              )}
-
-
-            {/* ACTIVITY LIST */}
-            {!loadingActivity &&
-              activities.length > 0 && (
-
-                <div className="space-y-3">
-
-                  {activities.map((activity) => (
-
-                    <div
-                      key={activity._id}
-                      className="border rounded-lg p-4 hover:bg-gray-50 transition"
-                    >
-
-                      <div className="flex justify-between items-start gap-4">
-
-                        <div>
-
-                          <h3 className="font-semibold text-gray-800 capitalize">
-                            {formatActivityType(
-                              activity.type
-                            )}
-                          </h3>
-
-                          <p className="text-sm text-gray-600 mt-1">
-                            {activity.description}
-                          </p>
-
-                        </div>
-
-
-                        <span className="text-xs text-gray-400 whitespace-nowrap">
-                          {new Date(
-                            activity.createdAt
-                          ).toLocaleDateString()}
-                        </span>
-
-                      </div>
-
-                    </div>
-
-                  ))}
-
-                </div>
-
-              )}
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      {/* =========================
-    {/* =========================
-    AI BEHAVIORAL INSIGHTS
-========================= */}
-<div className="bg-white rounded-2xl shadow-sm border border-gray-200 mt-8 overflow-hidden">
-
-  {/* Header */}
-  <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-    <div>
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">🧠</span>
-
-        <h2 className="text-xl font-bold text-gray-900">
-          AI Behavioral Insights
-        </h2>
-      </div>
-
-      <p className="text-gray-500 text-sm mt-1">
-        Your Personal Digital Twin analyzes your recent behavior and progress.
-      </p>
-    </div>
-
-    <Link
-      to="/ai-twin"
-      className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
-    >
-      Talk to AI Twin
-    </Link>
-
-  </div>
-
-
-  {/* Behavioral Metrics */}
-  <div className="p-6">
-
-    {loadingBehavior ? (
-
-      <div className="text-center py-8 text-gray-500">
-        Analyzing your behavior...
-      </div>
-
-    ) : behaviorSummary ? (
-
-      <>
-        {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-          {/* Task Completion */}
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
-
-            <p className="text-sm text-gray-500">
-              Task Completion
-            </p>
-
-            <div className="flex items-end gap-2 mt-2">
-
-              <span className="text-3xl font-bold text-blue-600">
-                {behaviorSummary.tasks.completionRate}%
-              </span>
-
-              <span className="text-sm text-gray-500 mb-1">
-                {behaviorSummary.tasks.performance}
-              </span>
-
+            <div className="text-3xl">
+              📊
             </div>
-
-            <p className="text-xs text-gray-500 mt-2">
-              {behaviorSummary.tasks.completed} of{" "}
-              {behaviorSummary.tasks.total} tasks completed
-            </p>
-
-          </div>
-
-
-          {/* Goal Progress */}
-          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
-
-            <p className="text-sm text-gray-500">
-              Goal Progress
-            </p>
-
-            <div className="flex items-end gap-2 mt-2">
-
-              <span className="text-3xl font-bold text-indigo-600">
-                {behaviorSummary.goals.completionRate}%
-              </span>
-
-              <span className="text-sm text-gray-500 mb-1">
-                {behaviorSummary.goals.progress}
-              </span>
-
-            </div>
-
-            <p className="text-xs text-gray-500 mt-2">
-              {behaviorSummary.goals.completed} of{" "}
-              {behaviorSummary.goals.total} goals completed
-            </p>
-
-          </div>
-
-
-          {/* Activity */}
-          <div className="bg-purple-50 border border-purple-100 rounded-xl p-5">
-
-            <p className="text-sm text-gray-500">
-              Recent Activity
-            </p>
-
-            <div className="flex items-end gap-2 mt-2">
-
-              <span className="text-3xl font-bold text-purple-600">
-                {behaviorSummary.activity.recentActivities}
-              </span>
-
-              <span className="text-sm text-gray-500 mb-1">
-                actions
-              </span>
-
-            </div>
-
-            <p className="text-xs text-gray-500 mt-2">
-              {behaviorSummary.activity.tasksCompleted} tasks completed
-            </p>
 
           </div>
 
         </div>
 
 
-        {/* Status Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        {/* INSIGHT CONTENT */}
 
-          {/* Strengths */}
-          <div className="bg-green-50 border border-green-100 rounded-xl p-5">
-
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <span>✓</span>
-              Current Strengths
-            </h3>
-
-            <ul className="mt-3 space-y-2 text-sm text-gray-600">
-
-              {behaviorSummary.tasks.completionRate >= 60 && (
-                <li>
-                  • Strong task completion performance
-                </li>
-              )}
-
-              {behaviorSummary.goals.completionRate >= 60 && (
-                <li>
-                  • Good progress toward your goals
-                </li>
-              )}
-
-              {behaviorSummary.activity.recentActivities > 0 && (
-                <li>
-                  • Consistent recent activity
-                </li>
-              )}
-
-              {behaviorSummary.tasks.completionRate < 60 &&
-                behaviorSummary.goals.completionRate < 60 && (
-                  <li>
-                    • Building a consistent productivity pattern
-                  </li>
-              )}
-
-            </ul>
-
-          </div>
-
-
-          {/* Areas to Improve */}
-          <div className="bg-amber-50 border border-amber-100 rounded-xl p-5">
-
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <span>⚠</span>
-              Areas to Improve
-            </h3>
-
-            <ul className="mt-3 space-y-2 text-sm text-gray-600">
-
-              {behaviorSummary.tasks.highPriorityPending > 0 && (
-                <li>
-                  • {behaviorSummary.tasks.highPriorityPending} high-priority task(s) pending
-                </li>
-              )}
-
-              {behaviorSummary.deadlines.overdueTasks > 0 && (
-                <li>
-                  • {behaviorSummary.deadlines.overdueTasks} overdue task(s) need attention
-                </li>
-              )}
-
-              {behaviorSummary.goals.completionRate < 60 && (
-                <li>
-                  • Goal completion needs improvement
-                </li>
-              )}
-
-              {behaviorSummary.tasks.highPriorityPending === 0 &&
-                behaviorSummary.deadlines.overdueTasks === 0 &&
-                behaviorSummary.goals.completionRate >= 60 && (
-                  <li>
-                    • No major issues detected from current data
-                  </li>
-              )}
-
-            </ul>
-
-          </div>
-
-        </div>
-
-
-        {/* AI Insight */}
-        <div className="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-5">
-
-          <div className="flex items-center gap-2 mb-3">
-
-            <span className="text-lg">🤖</span>
-
-            <h3 className="font-semibold text-gray-900">
-              AI Analysis
-            </h3>
-
-          </div>
+        <div className="p-6">
 
           {loadingInsight ? (
 
-            <p className="text-gray-500 text-sm">
-              Generating personalized analysis...
-            </p>
+            <div className="flex items-center gap-3 text-gray-500 py-6">
+
+              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+
+              <p>
+                Analyzing your behavior...
+              </p>
+
+            </div>
 
           ) : (
 
-            <div className="text-gray-700 text-sm leading-relaxed">
+            <div className="text-gray-700 leading-relaxed">
 
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
 
+                  h1: ({ children }) => (
+                    <h1 className="text-xl font-bold mb-3 text-gray-800">
+                      {children}
+                    </h1>
+                  ),
+
                   h2: ({ children }) => (
-                    <h2 className="text-base font-bold text-gray-900 mt-4 mb-2">
+                    <h2 className="text-lg font-bold mb-3 mt-4 text-gray-800">
                       {children}
                     </h2>
                   ),
 
                   h3: ({ children }) => (
-                    <h3 className="text-sm font-semibold text-gray-900 mt-3 mb-2">
+                    <h3 className="font-bold mb-2 mt-3 text-gray-800">
                       {children}
                     </h3>
                   ),
 
                   p: ({ children }) => (
-                    <p className="mb-2">
+                    <p className="mb-3 last:mb-0">
                       {children}
                     </p>
                   ),
 
                   ul: ({ children }) => (
-                    <ul className="list-disc ml-5 space-y-1 mb-3">
+                    <ul className="list-disc list-outside ml-6 mb-3 space-y-2">
                       {children}
                     </ul>
                   ),
 
+                  ol: ({ children }) => (
+                    <ol className="list-decimal list-outside ml-6 mb-3 space-y-2">
+                      {children}
+                    </ol>
+                  ),
+
                   li: ({ children }) => (
-                    <li>
+                    <li className="pl-1">
                       {children}
                     </li>
                   ),
 
                   strong: ({ children }) => (
-                    <strong className="font-semibold text-gray-900">
+                    <strong className="font-bold text-gray-900">
                       {children}
                     </strong>
                   ),
 
-                  hr: () => (
-                    <hr className="border-gray-200 my-4" />
+                  em: ({ children }) => (
+                    <em className="italic">
+                      {children}
+                    </em>
+                  ),
+
+                  table: ({ children }) => (
+                    <div className="overflow-x-auto my-4">
+                      <table className="min-w-full border border-gray-300 text-sm">
+                        {children}
+                      </table>
+                    </div>
+                  ),
+
+                  thead: ({ children }) => (
+                    <thead className="bg-gray-200">
+                      {children}
+                    </thead>
+                  ),
+
+                  th: ({ children }) => (
+                    <th className="border border-gray-300 px-3 py-2 text-left font-semibold">
+                      {children}
+                    </th>
+                  ),
+
+                  td: ({ children }) => (
+                    <td className="border border-gray-300 px-3 py-2">
+                      {children}
+                    </td>
                   ),
 
                 }}
@@ -754,19 +568,33 @@ const fetchBehaviorSummary = async () => {
 
         </div>
 
-      </>
-
-    ) : (
-
-      <div className="text-center py-8 text-gray-500">
-        Behavioral data is not available yet.
       </div>
 
-    )}
 
-  </div>
+      {/* =====================================================
+          AI TWIN CHAT
+      ===================================================== */}
 
-</div>
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl mt-8">
+
+        <h2 className="text-xl font-bold">
+          🤖 Talk to Your AI Twin
+        </h2>
+
+        <p className="mt-2 text-blue-100">
+          Ask your Personal Digital Twin about your goals,
+          tasks, memories, productivity, or decisions.
+        </p>
+
+        <Link
+          to="/ai-twin"
+          className="inline-block mt-4 bg-white text-blue-600 px-5 py-2 rounded-lg font-medium hover:bg-gray-100 transition"
+        >
+          Start Conversation
+        </Link>
+
+      </div>
+
     </div>
   );
 }
