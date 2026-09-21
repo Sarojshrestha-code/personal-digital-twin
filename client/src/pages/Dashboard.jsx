@@ -502,19 +502,19 @@ function Dashboard() {
                   ),
 
                   ul: ({ children }) => (
-                    <ul className="list-disc list-outside ml-6 mb-3 space-y-2">
+                    <ul className="list-disc list-outside ml-6 mb-4 space-y-2">
                       {children}
                     </ul>
                   ),
 
                   ol: ({ children }) => (
-                    <ol className="list-decimal list-outside ml-6 mb-3 space-y-2">
+                    <ol className="list-decimal list-outside ml-6 mb-4 space-y-2">
                       {children}
                     </ol>
                   ),
 
                   li: ({ children }) => (
-                    <li className="pl-1">
+                    <li className="pl-1 leading-relaxed">
                       {children}
                     </li>
                   ),
